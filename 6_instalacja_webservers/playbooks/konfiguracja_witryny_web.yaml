@@ -1,0 +1,48 @@
+---
+- name: Playbook tworzący plik testowej witryny, oraz konfigurację witryny w apache2 na serwerach WEB
+  hosts: serweryweb
+  gather_facts: no # nie chcemy zbierać infromacji o urządzeniach 
+  become: true # wykonanie czynności z wykorzystaniem sudo
+
+  tasks:
+    - name: Utworzenie katalogu dla testowej witryny
+      file:
+        path: /www/strona1
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+    
+    - name: Utworzenie pliku index.html
+      copy:
+        content: "Witaj na testowej stronie"
+        dest: "/www/strona1/index.html"
+        mode: '0644'
+
+    - name: Utworzenie pliku strona.php
+      copy:
+        content: |
+          <?php
+          echo "<h2>Witaj na testowej stronie PHP </h2>";
+          ?>
+        dest: "/www/strona1/strona.php"
+        mode: '0644'
+
+    - name: Utworzenie dla apache2 pliku z konfiguracją virtualnego hosta
+      copy:
+        src: /home/user/ansible/playbooks/strona1.conf
+        dest: /etc/apache2/sites-available/strona1.conf
+        mode: '0644'
+
+    - name: Włączenie utworzonego pliku konfiguracyjnego virtualnego hosta
+      command: a2ensite strona1.conf  
+
+    - name: Przeładowanie usługi apache2 aby zatwierdzić wprowadzone zmiany
+      systemd:
+        name: apache2
+        state: reloaded
+    
+    - name: Sprawdź czy apache2 działa po restarcie
+      systemd:
+        name: apache2
+        state: started
