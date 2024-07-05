@@ -1,0 +1,41 @@
+---
+- name: Playbook instalujący serwer stron internetowych na serwerach WEB
+  hosts: serweryweb
+  gather_facts: no # nie chcemy zbierać infromacji o urządzeniach 
+  become: true # wykonanie czynności z wykorzystaniem sudo
+
+  tasks:
+    - name: aktualizacja zawartości repozytoriów - "apt-get update"
+      apt:
+        update_cache: yes
+
+    - name: Zaktualizuj wszystkie pakiety do najnowszej wersji - "apt-get upgrade"
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+
+    - name: Install apache httpd  (state=present is optional)
+      ansible.builtin.apt:
+        name: 
+          - apache2
+          - php
+        state: present
+    
+    - name: Upewnij się, że Apache2 jest włączony i uruchomi się podczas startu systemu
+      systemd:
+        name: apache2
+        enabled: yes
+        state: started
+
+    - name: Sprawdź czy php jest zainstalowane i w jakiej wersji
+      command: php -v
+      register: php_version
+      ignore_errors: yes
+    
+    - name: Wyświetl informację o zainstalowanej wersji PHP
+      debug:
+        msg: "Zainstalowana wersja PHP to {{ php_version.stdout }}"
+
+
+
+    
