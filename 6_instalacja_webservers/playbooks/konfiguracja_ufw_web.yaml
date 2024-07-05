@@ -1,0 +1,49 @@
+---
+- name: Playbook instalujący i konfigurujący UFW na serwerach WEB
+  hosts: serweryweb
+  gather_facts: no # nie chcemy zbierać infromacji o urządzeniach 
+  become: true # wykonanie czynności z wykorzystaniem sudo
+
+  tasks:
+    - name: Instalacja pakietu UFW
+      apt:
+        name: ufw
+        update_cache: yes
+        state: present
+    
+    - name: Zezwalaj na połączenia SSH przez UFW
+      ufw:
+        rule: allow
+        name: OpenSSH
+    
+    - name: Zezwalaj na połączenia HTTP przez UFW
+      ufw:
+        rule: allow
+        port: 80
+        proto: tcp
+
+    - name: Zezwalaj na połączenia HTTPS przez UFW
+      ufw:
+        rule: allow
+        port: 443
+        proto: tcp
+
+    - name: Włącz UFW z domyślną polityką odmów dla ruchu przychodzącego
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming 
+
+    - name: Upewnij się, że UFW jest włączony i uruchomi się podczas rozruchu
+      systemd:
+        name: ufw
+        state: started
+        enabled: yes
+
+    - name: Wyświetl reguły UFW
+      command: ufw status numbered
+      register: ufw_status
+
+    - name: Wypisz zawartość UFW
+      debug:
+        var: ufw_status.stdout_lines
