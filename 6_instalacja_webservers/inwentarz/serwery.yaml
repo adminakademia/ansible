@@ -1,0 +1,42 @@
+servers:
+  children:
+    serweryweb:
+      hosts:
+        web1.private:
+          ansible_host: 192.168.122.201
+          ansible_connection: ssh
+        web2:
+          ansible_host: 192.168.122.202
+    loadbalancers:
+      hosts:
+        lb1:
+          ansible_host: 192.168.122.7
+          ansible_connection: ssh
+          ansible_ssh_user: user
+          ansible_ssh_pass: Zaq12wsx
+        lb2:
+          ansible_host: 192.168.122.234
+    cisco:
+      vars:
+        ansible_connection: ssh
+        ansible_ssh_user: cisco
+        ansible_ssh_pass: cisco        
+      hosts:
+        r1.private:
+          ansible_host: 192.168.122.240
+          #ansible_connection: ssh
+          #ansible_ssh_user: cisco
+          #ansible_ssh_pass: cisco
+        s1.private:
+          ansible_host: 192.168.122.241
+          #ansible_connection: ssh
+          #ansible_ssh_user: cisco
+          #ansible_ssh_pass: cisco
+
+local:
+  children:
+    moj_pc:
+      hosts:
+        ansible1:
+          ansible_host: localhost
+          ansible_connection: local
