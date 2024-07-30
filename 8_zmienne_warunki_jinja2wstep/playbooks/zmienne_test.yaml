@@ -1,0 +1,13 @@
+---
+- name: Playbook do przetestowania działania zmiennych specjalnych
+  gather_facts: no # nie chcemy zbierać informacji o urządzeniach
+  hosts: lb1
+
+  tasks:
+    - name: Zabawa ze zmienną magiczną
+      debug:
+        var: ansible_version
+
+    - name: Zabawa ze zmienną połączenia
+      debug:
+        var: ansible_host, ansible_connection
