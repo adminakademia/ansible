@@ -1,0 +1,58 @@
+---
+- name: Playbook tworzący użytkowników na serwerach WEB i LB
+  gather_facts: no # nie chcemy zbierać infromacji o urządzeniach
+  hosts: local 
+  vars:
+    uzytkownicy_dla_web_lb:
+      - mkowalski
+      - jgula
+      - pszary
+  tasks:
+    - name: Generowanie kluczy SSH dla użytkowników
+      openssh_keypair:
+        path: "/home/user/ansible/ansible/klucze_ssh/{{ item }}"
+        type: ed25519
+        comment: "klucz dla {{ item }}"
+      loop: "{{ uzytkownicy_dla_web_lb }}"
+
+
+- name: Dodanie użytkowników do systemów
+  hosts: serweryweb,loadbalancers
+  gather_facts: no # nie chcemy zbierać infromacji o urządzeniach
+  become: true # wykonanie czynności z wykorzystaniem sudo
+  vars:
+    uzytkownicy_dla_web_lb:
+      - mkowalski
+      - jgula
+      - pszary
+    uzytkownicy_test: 
+      user_1: maria
+      user_2: wojtek
+      user_3: jola
+    bloki_adresow_ip:
+      produkcja:
+        blok: "172.31.0.0/16"
+      marketing:
+        blok: "10.0.0.0/24"
+
+  tasks:
+    - name: dodanie użytkowników
+      user:
+        name: "{{ item }}"
+        comment: "Uzytkownik {{ item }}"
+        shell: /bin/bash
+      loop: "{{ uzytkownicy_dla_web_lb }}"
+    
+    - name: Dodanie kluczy ssh dla uzytkownikow
+      authorized_key:
+        user: "{{ item }}"
+        state: present
+        key: "{{ lookup('file','/home/user/ansible/ansible/klucze_ssh/' + item + '.pub') }}"
+      loop: "{{ uzytkownicy_dla_web_lb }}"
+      tags: kopiowanie_kluczyssh
+    
+
+    - name: Zabawa ze zmiennymi
+      debug:
+        msg: " Użytkownik {{ bloki_adresow_ip['produkcja']['blok'] }} "
+      tags: zabawa
