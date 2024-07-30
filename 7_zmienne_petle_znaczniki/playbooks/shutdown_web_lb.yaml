@@ -1,0 +1,9 @@
+---
+- name: Playbook wyłączający serwery WEB i LB
+  hosts: serweryweb,loadbalancers
+  gather_facts: no # nie chcemy zbierać informacji o urządzeniach 
+  become: true # wykonanie czynności z wykorzystaniem sudo
+
+  tasks:
+    - name: wyłączenie serwerów WEB i LB
+      command: poweroff
