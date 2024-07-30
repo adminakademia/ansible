@@ -1,0 +1,30 @@
+- name: Konfiguracja wstępna serwerów web i lb
+  hosts: serweryweb,loadbalancers
+  gather_facts: yes # chcemy zbierać informacje o urządzeniach
+  become: true # wykonanie czynności z wykorzystaniem sudo
+
+  tasks:
+    - name: Zmiana nazwy hosta
+      hostname:
+        name: "{{ inventory_hostname }}"
+      tags: nazwa_hosta
+
+    - name: kopiowanie motd do hostow web
+      when: (ansible_nodename == "web1.private") or (ansible_nodename == "web2.private")
+      template:
+        src: motd1.j2
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+      tags: motd_web
+
+    - name: kopiowanie motd do hostow lb
+      when: (ansible_nodename == "lb1.private") or (ansible_nodename == "lb2.private")
+      template:
+        src: motd2.j2
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+      tags: motd_lb
