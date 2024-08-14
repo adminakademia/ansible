@@ -1,0 +1,13 @@
+---
+- name: Playbook do zabawy jinja2
+  gather_facts: yes # nie chcemy zbierać informacji o urządzeniach
+  hosts: local 
+  vars:
+    numer_wersji: 2.5.5
+    server: "Debian GNU/Linux"
+    
+  tasks:
+    - name: przyklad wykorzystania szablonu Jinja2
+      template:
+        src: przyklad.j2
+        dest: wydrukowany_plik.txt
