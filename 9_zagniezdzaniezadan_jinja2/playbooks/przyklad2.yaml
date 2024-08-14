@@ -1,0 +1,12 @@
+---
+- name: Playbook do zabawy jinja2
+  gather_facts: yes # nie chcemy zbierać informacji o urządzeniach
+  hosts: local 
+  vars:
+    servery: ['web1', 'web2', 'lb1', 'lb2']
+    
+  tasks:
+    - name: przyklad wykorzystania szablonu Jinja2
+      template:
+        src: przyklad2.j2
+        dest: wydrukowany_plik.txt
