@@ -1,0 +1,27 @@
+vrrp_script check_haproxy {
+script "killall -0 haproxy"
+interval 2
+weight 2
+}
+
+vrrp_instance VRRP_EXT {
+interface {{ interface }}
+state MASTER
+virtual_router_id 52
+priority {{ priority }}
+advert_int 1
+
+authentication {
+auth_type AH
+auth_pass {{ haslo_keepalived }}
+}
+
+virtual_ipaddress {
+{{ virtual_ip }}
+}
+
+track_script {
+check_haproxy
+}
+}
+{{''}}
