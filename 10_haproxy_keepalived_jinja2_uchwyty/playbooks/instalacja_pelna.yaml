@@ -1,0 +1,58 @@
+- name: Playbook realizujący pełną konfigurację serwerów web i lb
+  hosts: serweryweb,loadbalancers,local
+  gather_facts: yes # chcemy zbierać informacje o urządzeniach
+  vars:
+    uzytkownicy_dla_web_lb:
+      - mkowalski
+      - jgula
+      - pszary
+    apt_env:
+      DEBIAN_FRONTEND: noninteractive
+    haproxy_backend_serwery:
+    - { host_nazwa: 'web1', ip: '192.168.122.201' }
+    - { host_nazwa: 'web2', ip: '192.168.122.202' }
+  
+  tasks:
+    - name: Konfiguracja wstępna serwerów web i lb
+      include_tasks: konfiguracja_wstepna.yaml
+      when: (ansible_nodename == "lb1.private") or (ansible_nodename == "lb2.private") or (ansible_nodename == "web1.private") or (ansible_nodename == "web2.private")
+      tags: konfiguracja_wstepna
+  
+    - name: Utworzenie użytkowników na serwerach WEB i LB
+      include_tasks: tworzenie_uzytkownikow.yaml
+      tags: tworzenie_uzytkownikow
+
+
+    - name: instalacja oprogramowania na serwerach LB
+      include_tasks: ./serwery_lb/instalacja_lb.yaml
+      when: (ansible_nodename == "lb1.private") or (ansible_nodename == "lb2.private")
+      tags: instalacja_lb
+
+
+  handlers:
+    - name: restart keepalived
+      service: 
+        name=keepalived 
+        state=restarted
+      notify: Sprawdzenie po restarcie, czy Keepalived jest uruchomione
+
+    - name: Sprawdzenie po restarcie, czy Keepalived jest uruchomione
+      service_facts:
+    - name: Sprawdzenie statusu Keepalived po restarcie
+      assert:
+        that:
+          - "ansible_facts.services['keepalived.service'].state == 'running'"
+          
+    - name: restart haproxy
+      service: 
+        name=haproxy 
+        state=restarted
+      notify: Sprawdzenie po restarcie, czy HAProxy jest uruchomione
+
+    - name: Sprawdzenie po restarcie, czy HAProxy jest uruchomione
+      service_facts:
+    - name: Sprawdzenie statusu HAProxy po restarcie
+      assert:
+        that:
+          - "ansible_facts.services['haproxy.service'].state == 'running'"
+
