@@ -1,0 +1,16 @@
+---
+- name: Wyświetlanie wszystkich zebranych faktów
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Wyświetlanie zebranych faktów
+      debug:
+        var: ansible_facts
+
+    - name: Zapisywanie faktów do pliku lokalnego
+      local_action:
+        module: copy
+        content: "{{ ansible_facts | to_nice_json }}"
+        dest: "./fakty.txt"
+      delegate_to: localhost
+
