@@ -5,7 +5,7 @@
   become: true # wykonanie czynności z wykorzystaniem sudo
 
   tasks:
-    - name: aktualizacja zawartości repozytoriów - "apt-get update"
+    - name: Aktualizacja zawartości repozytoriów - "apt-get update"
       apt:
         update_cache: yes
 
@@ -14,7 +14,7 @@
         name: "*"
         state: latest
 
-    - name: Install apache httpd  (state=present is optional)
+    - name: Zainstaluj serwer Apache2
       ansible.builtin.apt:
         name: 
           - apache2
