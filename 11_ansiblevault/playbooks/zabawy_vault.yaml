@@ -1,0 +1,12 @@
+- hosts: lb1.private
+  gather_facts: yes
+  vars_files:
+    - zmienne/lb2.yaml
+    - zmienne/hasla_do_ssh.yaml
+  tasks:
+    - name: print msg1
+      debug:
+        msg: "Wiadomosc1: {{ ansible_become_pass }}"
+    - name: print msg2
+      debug:
+        msg: "Wiadomosc2: {{ haslo_do_bazy }}"
