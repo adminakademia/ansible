@@ -1,0 +1,47 @@
+
+- name: Zmiana nazwy hosta
+  become: "{{ ansible_become | default(false) }}"
+  hostname:
+    name: "{{ inventory_hostname }}"
+  tags: nazwa_hosta
+
+- name: kopiowanie motd do hostow web
+  become: "{{ ansible_become | default(false) }}"
+  when: (ansible_nodename == "web1.private") or (ansible_nodename == "web2.private")
+  template:
+    src: motd1.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  tags: motd_web
+
+- name: kopiowanie motd do hostow lb
+  become: "{{ ansible_become | default(false) }}"
+  when: (ansible_nodename == "lb1.private") or (ansible_nodename == "lb2.private")
+  template:
+    src: motd2.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  tags: motd_lb
+
+- name: Tworzenie listy wpisów do pliku /etc/hosts
+  set_fact:
+    hosts_entries: |
+      {% for host in groups['serweryweb'] + groups['loadbalancers'] %}
+      {{ hostvars[host]['ansible_host'] }} {{ hostvars[host]['inventory_hostname'] }}
+      {% endfor %}
+  tags: fakty_hosts
+
+
+- name: Modyfikacja pliku hosts
+  become: "{{ ansible_become | default(false) }}"
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{ item }}"
+    state: present
+  with_items: "{{ hosts_entries.split('\n') }}"
+  when: item | length > 0
+  tags: hosts_zmiana
