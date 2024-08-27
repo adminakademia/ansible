@@ -1,0 +1,119 @@
+- name: aktualizacja zawartości repozytoriów - "apt-get update"
+  environment: "{{ apt_env }}"
+  register: upgradeapt
+  apt:
+    upgrade: safe
+    update_cache: yes
+    dpkg_options: 'force-confold,force-confdef'
+
+- name: Wyświetl ostatni wiersz poprzedniego zadania dla weryfikacji
+  debug:
+    msg:  "{{upgradeapt.stdout_lines|last}}"
+
+- name: Install apache httpd  (state=present is optional)
+  ansible.builtin.apt:
+    name: 
+      - apache2
+      - php
+    state: present
+
+- name: Upewnij się, że Apache2 jest włączony i uruchomi się podczas startu systemu
+  systemd:
+    name: apache2
+    enabled: yes
+    state: started
+
+- name: Sprawdź czy php jest zainstalowane i w jakiej wersji
+  command: php -v
+  register: php_version
+  ignore_errors: yes
+
+- name: Wyświetl informację o zainstalowanej wersji PHP
+  debug:
+    msg: "Zainstalowana wersja PHP to {{ php_version.stdout }}"
+
+- name: Utworzenie katalogu dla testowej witryny
+  file:
+    path: /www/strona1
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Utworzenie pliku index.html
+  copy:
+    content: "Witaj na testowej stronie {{ inventory_hostname }}"
+    dest: "/www/strona1/index.html"
+    mode: '0644'
+  tags: utworzenie_indexhtml
+
+- name: Utworzenie pliku strona.php
+  copy:
+    content: |
+      <?php
+      echo "<h2>Witaj na testowej stronie PHP </h2>";
+      ?>
+    dest: "/www/strona1/strona.php"
+    mode: '0644'
+
+- name: Utworzenie dla apache2 pliku z konfiguracją virtualnego hosta
+  copy:
+    src: strona1.conf
+    dest: /etc/apache2/sites-available/strona1.conf
+    mode: '0644'
+
+- name: Włączenie utworzonego pliku konfiguracyjnego virtualnego hosta
+  command: a2ensite strona1.conf  
+
+- name: Przeładowanie usługi apache2 aby zatwierdzić wprowadzone zmiany
+  systemd:
+    name: apache2
+    state: reloaded
+
+- name: Sprawdź czy apache2 działa po restarcie
+  systemd:
+    name: apache2
+    state: started
+
+- name: Instalacja pakietu UFW
+  apt:
+    name: ufw
+    update_cache: yes
+    state: present
+
+- name: Zezwalaj na połączenia SSH przez UFW
+  ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Zezwalaj na połączenia HTTP przez UFW
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+
+- name: Zezwalaj na połączenia HTTPS przez UFW
+  ufw:
+    rule: allow
+    port: 443
+    proto: tcp
+
+- name: Włącz UFW z domyślną polityką odmów dla ruchu przychodzącego
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming 
+
+- name: Upewnij się, że UFW jest włączony i uruchomi się podczas rozruchu
+  systemd:
+    name: ufw
+    state: started
+    enabled: yes
+
+- name: Wyświetl reguły UFW
+  command: ufw status numbered
+  register: ufw_status
+
+- name: Wypisz zawartość UFW
+  debug:
+    var: ufw_status.stdout_lines
