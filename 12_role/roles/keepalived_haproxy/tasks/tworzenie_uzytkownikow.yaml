@@ -1,0 +1,37 @@
+
+- name: Utworzenie podkatalogu kluczessh w katalogu domowym
+  file:
+    path: "{{ lookup('env', 'HOME') }}/kluczessh"
+    state: directory
+    mode: '0700'
+
+#- name: Generowanie kluczy SSH dla użytkowników
+#  become: "{{ ansible_become | default(false) }}"
+#  when: (inventory_nodename == "ansible1")
+#  openssh_keypair:
+#    path: "{{ lookup('env', 'HOME') }}/kluczessh/{{ item }}"
+#    type: ed25519
+#    comment: "klucz dla {{ item }}"
+#  loop: "{{ uzytkownicy_dla_web_lb }}"
+
+
+- name: dodanie użytkowników
+  become: "{{ ansible_become | default(false) }}"
+  when: (ansible_nodename == "lb1.private") or (ansible_nodename == "lb2.private") or (ansible_nodename == "web1.private") or (ansible_nodename == "web2.private")
+  user:
+    name: "{{ item }}"
+    comment: "Uzytkownik {{ item }}"
+    shell: /bin/bash
+  loop: "{{ uzytkownicy_dla_web_lb }}"
+
+#- name: Dodanie kluczy ssh dla uzytkownikow
+#  become: "{{ ansible_become | default(false) }}"
+#  when: (ansible_nodename == "lb1.private") or (ansible_nodename == "lb2.private") or (ansible_nodename == "web1.private") or (ansible_nodename == "web2.private")
+#  authorized_key:
+#    user: "{{ item }}"
+#    state: present
+#    key: "{{ lookup('file', lookup('env', 'HOME') + '/kluczessh/' + item + '.pub') }}"
+#  loop: "{{ uzytkownicy_dla_web_lb }}"
+#  tags: kopiowanie_kluczyssh
+
+
