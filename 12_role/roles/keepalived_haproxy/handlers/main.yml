@@ -1,0 +1,27 @@
+---
+# handlers file for ./roles/keepalived_haproxy
+- name: restart keepalived
+  service: 
+    name=keepalived 
+    state=restarted
+  notify: Sprawdzenie po restarcie, czy Keepalived jest uruchomione
+
+- name: Sprawdzenie po restarcie, czy Keepalived jest uruchomione
+  service_facts:
+- name: Sprawdzenie statusu Keepalived po restarcie
+  assert:
+    that:
+      - "ansible_facts.services['keepalived.service'].state == 'running'"
+      
+- name: restart haproxy
+  service: 
+    name=haproxy 
+    state=restarted
+  notify: Sprawdzenie po restarcie, czy HAProxy jest uruchomione
+
+- name: Sprawdzenie po restarcie, czy HAProxy jest uruchomione
+  service_facts:
+- name: Sprawdzenie statusu HAProxy po restarcie
+  assert:
+    that:
+      - "ansible_facts.services['haproxy.service'].state == 'running'"
