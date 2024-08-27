@@ -1,0 +1,11 @@
+---
+# vars file for ./roles/keepalived_haproxy
+uzytkownicy_dla_web_lb:
+  - mkowalski
+  - jgula
+  - pszary
+apt_env:
+  DEBIAN_FRONTEND: noninteractive
+haproxy_backend_serwery:
+- { host_nazwa: 'web1', ip: '192.168.122.201' }
+- { host_nazwa: 'web2', ip: '192.168.122.202' }
