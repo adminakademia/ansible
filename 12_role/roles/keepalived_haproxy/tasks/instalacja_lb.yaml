@@ -1,0 +1,88 @@
+- name: print msg
+  debug:
+    msg: Witaj w {{ ansible_nodename }}
+
+- name: Ustawienie pliku dysku dla aktulizowanego pakietu grub 
+  shell: debconf-set-selections <<< "grub-pc grub-pc/install_devices multiselect /dev/sda"
+  args:
+    executable: /bin/bash
+
+- name: aktualizacja zawartości repozytoriów - "apt-get update"
+  environment: "{{ apt_env }}"
+  register: upgradeapt
+  apt:
+    upgrade: safe
+    update_cache: yes
+    dpkg_options: 'force-confold,force-confdef'
+
+- name: Wyświetl ostatni wiersz poprzedniego zadania dla weryfikacji
+  debug:
+    msg:  "{{upgradeapt.stdout_lines|last}}"
+
+
+- name: Aktywacja odpowiedzi na pakiety przychodzące na wirtualny adres IP
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  tags: aktywacja_vip
+
+
+- name: Instalacja HAProxy
+  apt:
+    name: haproxy
+    state: present
+  tags: instalacja_haproxy
+  notify: restart haproxy
+
+- name: Instalacja keepalived
+  apt:
+    name: keepalived
+    state: present
+  tags: instalacja_keepalived
+
+- name: Konfiguracja automatycznego startu HAProxy i Keepalived przy starcie systemu
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+    - haproxy
+    - keepalived
+
+
+- name: Sprawdzenie, czy HAProxy i Keepalived są uruchomione
+  service_facts:
+
+- name: Sprawdzenie statusu HAProxy
+  assert:
+    that:
+    - "ansible_facts.services['haproxy.service'].state == 'running'"
+
+- name: Sprawdzenie statusu Keepalived
+  assert:
+    that:
+    - "ansible_facts.services['keepalived.service'].state == 'running'"
+
+
+
+- name: Konfiguracja keepalived
+  vars:
+    interface: "{{ ansible_default_ipv4.interface }}"
+    virtual_ip: "192.168.122.169"
+    priority: "{{ groups['loadbalancers'].index(inventory_hostname) + 100 }}"
+    haslo_keepalived: "password123"
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+  tags: konfiguracja_keepalived
+  notify: restart keepalived
+
+- name: Konfiguracja HAProxy
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+  tags: konfiguracja_haproxy
+  notify: restart haproxy
