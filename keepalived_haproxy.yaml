@@ -1,0 +1,12 @@
+- name: Playbook realizujący pełną konfigurację serwerów web i lb
+  hosts: serweryweb,loadbalancers,local
+  gather_facts: yes # chcemy zbierać informacje o urządzeniach
+  
+  pre_tasks:
+  - name: Wiadomosc testowa
+    debug:
+      msg: "wiadomosc testowa"
+    tags: wiadomosc_testowa
+  
+  roles:
+    - { role: 'keepalived_haproxy', tags: 'keepalived_haproxy' }
