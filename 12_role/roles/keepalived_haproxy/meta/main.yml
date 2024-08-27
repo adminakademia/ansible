@@ -1,0 +1,18 @@
+galaxy_info:
+  author: Jacek Gula
+  description: Instalacja serwerow www z loadbalancer'em haproxy w klastrze vrrp
+  company: "Gula sp. z o.o."
+  license: "license (BSD, MIT)"
+  role_name: haproxy_keepalived
+  min_ansible_version: "2.14"
+  platforms:
+  - name: Debian
+    versions:
+      - bookworm
+      - bullseye
+  galaxy_tags:
+    - apache2
+    - haproxy
+    - keepalived
+    - vrrp
+dependencies: []
