@@ -1,0 +1,22 @@
+---
+# vars file for ./roles/keepalived_haproxy
+
+uzytkownicy_dla_web_lb:
+  - mkowalski
+  - jgula
+  - pszary
+apt_env:
+  DEBIAN_FRONTEND: noninteractive
+haproxy_backend_serwery:
+- { host_nazwa: 'web1', ip: '192.168.111.220' }
+- { host_nazwa: 'web2', ip: '192.168.111.221' }
+docker_edition: 'ce'
+docker_package: "docker-{{ docker_edition }}"
+docker_package_state: present
+docker_service_manage: true
+docker_service_state: started
+docker_service_enabled: true
+docker_restart_handler_state: restarted
+docker_install_compose_plugin: true
+docker_compose_package: docker-compose-plugin
+docker_compose_package_state: present
