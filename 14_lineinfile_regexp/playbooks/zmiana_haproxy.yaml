@@ -1,0 +1,20 @@
+---
+- name: Playbook modyfikujący błędny wpis na serwerach LB
+  hosts: loadbalancers
+  gather_facts: no # nie chcemy zbierać informacji o urządzeniach 
+  become: true # wykonanie czynności z wykorzystaniem sudo
+
+  tasks:
+    - name: Wymieniamy wiersz w haproxy.cfg
+      lineinfile:
+        path: /etc/haproxy/haproxy.cfg
+        regexp: '^backend mnginx-docker-back'
+        line: 'backend nginx-docker-back'
+        backrefs: yes
+      notify: Restart haproxy
+
+  handlers:
+    - name: Restart haproxy
+      service:
+        name: haproxy
+        state: restarted
