@@ -1,0 +1,19 @@
+---
+- name: Playbook modyfikujący plik hosts
+  hosts: 127.0.0.1
+  gather_facts: no # nie chcemy zbierać infromacji o urządzeniach 
+  become: true # wykonanie czynności z wykorzystaniem sudo
+
+  tasks:
+    - name: Modyfikujemy plik hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item.line }}"
+        insertafter: "{{ item.insertafter }}"
+      loop:
+      - line: '192.168.122.202         web2.private'
+        insertafter: '^192.168.122.201'
+      - line: '192.168.122.7         lb1.private'
+        insertafter: '^192.168.122.202'
+      - line: '192.168.122.8         lb12.private'
+        insertafter: '^192.168.122.7'
