@@ -1,0 +1,73 @@
+---
+- name: Playbook testowy4 dla Cisco
+  gather_facts: no 
+  hosts: s1.private
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: cisco.ios.ios
+    ansible_user: user
+    ansible_ssh_private_key_file: '~/.ssh/id_rsa'
+
+    vlans:
+      - id: 10
+        name: Sprzedaz
+      - id: 20
+        name: Kadry
+      - id: 30
+        name: Marketing
+      - id: 1000
+        name: Natywny
+
+  tasks:
+    - name: Konfiguracja VLAN'ów
+      ios_vlans:
+        config:
+          - vlan_id: "{{ item.id }}"
+            name: "{{ item.name }}"
+      loop: "{{ vlans }}"
+
+    - name: Weryfikacja czy VLANy zostały faktycznie skonfigurowane
+      ios_command:
+        commands:
+          - show vlan brief
+        waitfor:
+          - result[0] contains Sprzedaz
+
+    - name: Konfiguracja dot1q na interfejsie na którym będzie trunk
+      ios_config:
+        lines:
+        - switchport trunk encapsulation dot1q
+        parents: interface GigabitEthernet3/2
+
+    - name: Konfiguracja portu GigabitEthernet3/2 jako trunk
+      ios_l2_interfaces:
+        config:
+        - name: GigabitEthernet3/2
+          mode: trunk
+          trunk:
+            allowed_vlans: 10,20,30,1000
+            native_vlan: 1000
+            encapsulation: dot1q
+
+
+    - name: Weryfikacja czy vlany i trunk zostały faktycznie skonfigurowane
+      ios_command:
+        commands:
+          - show int trunk
+          - show vlan brief
+        waitfor:
+          - result[0] contains '802.1q'
+          - result[1] contains Kadry
+
+    - name: Zapisanie zmodyfikowanej konfiguracji
+      ios_config:
+        save_when: modified
+
+    - name: Pobieranie informacji z urządzeń cisco
+      ios_command:
+        commands:
+        - show vl br
+        - sh int trunk
+      register: wynik_show
+    
+    - debug: var=wynik_show.stdout_lines
