@@ -1,0 +1,11 @@
+---
+- name: Playbook testowy dla Cisco
+  gather_facts: no 
+  hosts: cisco
+    
+  tasks:
+    - name: show arp
+      raw: "show arp"
+      register: wynik_show_arp
+    
+    - debug: var=wynik_show_arp.stdout_lines
