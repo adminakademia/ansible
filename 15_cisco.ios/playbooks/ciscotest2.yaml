@@ -1,0 +1,19 @@
+---
+- name: Playbook testowy2 dla Cisco
+  gather_facts: no 
+  hosts: cisco
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: cisco.ios.ios
+    ansible_user: user
+    ansible_ssh_private_key_file: '~/.ssh/id_rsa'
+
+  tasks:
+    - name: pobieranie informacji z urządzeń cisco
+      ios_command:
+        commands:
+        - show version
+        - show ip interface brief
+      register: wynik_show
+    
+    - debug: var=wynik_show.stdout_lines
