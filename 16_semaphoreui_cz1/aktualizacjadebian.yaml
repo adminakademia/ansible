@@ -1,0 +1,15 @@
+- name: Playbook do aktualizacji Debian
+  hosts: serweryweb
+  gather_facts: yes
+
+  tasks:
+  - name: Zaktualizuj wszystkie pakiety do najnowszej wersji - "apt-get upgrade"
+    environment: "DEBIAN_FRONTEND: noninteractive"
+    apt:
+      upgrade: safe
+      update_cache: yes
+      autoclean: true
+      clean: true
+      autoremove: true
+      dpkg_options: 'force-confold,force-confdef'
+    register: upgradeapt
