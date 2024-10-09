@@ -1,0 +1,54 @@
+- name: Playbook do aktualizacji Debian
+  hosts: serweryweb
+  gather_facts: yes
+
+  tasks:
+  - name: Zaktualizuj wszystkie pakiety do najnowszej wersji - "apt-get upgrade"
+    environment: "DEBIAN_FRONTEND: noninteractive"
+    apt:
+      upgrade: safe
+      update_cache: yes
+      autoclean: true
+      clean: true
+      autoremove: true
+      dpkg_options: 'force-confold,force-confdef'
+    register: upgradeapt
+
+#  - name: Powiadomienie do discord
+#    community.general.discord:
+#      webhook_id: "1293662871770632354"
+#      webhook_token: !vault |
+#          $ANSIBLE_VAULT;1.1;AES256
+#          31316664346665373361653936323338653639383433393664636332303966646133643334396133
+#          6134363434343161626263363963353037356533313561650a323431633461326131313839336133
+#          61383465363639383762303838653636333462653066363364313739633463336634663131656361
+#          6339396630393136390a346634316337363035663830343839356665346135396661383130373065
+#          30663163383164386466613134356234536635366636396464373637386136626263386364316366
+#          38353532333030326164373332326234343861323232613537333766333163313761363865323135
+#          65306533646431656336633932626563353064313366633137343138663033323232323166376365
+#          66313232643639653930
+#      username: Semaphore
+#      content: "✅ Status aktualizacji oprogramowania na {{ ansible_hostname }}: {{ upgradeapt.stdout_lines }} ✅"
+      
+
+  - name: Powiadomienie na Slack
+    community.general.slack:
+      token: !vault |
+                $ANSIBLE_VAULT;1.1;AES256
+                30646362646166373830646537623864306261303436363732356362663432646663653866633133
+                3034366432646234373432336562353733306236326139370a343630373865323033343639303966
+                32363535633637313562613963393537333764393462313966633135373463363936366636323836
+                3362326639653031380a343062616132326635633262633733623534303065376630626137363530
+                37623934393438646663653531396323453562333830623035306632376631333265393634313962
+                63616265653564666531643464633933316265626435313863333730306364336561356564663862
+                363939626266316639646435663939393338
+      username: 'Ansible na {{ inventory_hostname }}'
+      msg: |
+          ### StatusAktualizacjiOprogramowania ###
+          – ------------------------------------
+          ``
+          `Server`: {{ansible_hostname}}
+          `Status`: {{ upgradeapt.stdout_lines }}
+          – ------------------------------------
+      channel: "#semaphoreui"
+      color: good
