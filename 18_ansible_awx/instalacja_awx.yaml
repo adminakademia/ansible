@@ -1,0 +1,103 @@
+---
+- name: Install Minikube and deploy AWX Operator
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update and upgrade system packages
+      apt:
+        update_cache: yes
+        upgrade: full
+        force_apt_get: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - git
+          - make
+          - curl
+          - docker.io
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker service is started and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create /awx directory
+      file:
+        path: /awx
+        state: directory
+        mode: '0755' 
+        
+    - name: Download kubectl binary
+      get_url:
+        url: "https://dl.k8s.io/release/{{ lookup('url', 'https://dl.k8s.io/release/stable.txt') }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    - name: Download Minikube deb package
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+        dest: /awx/minikube_latest_amd64.deb
+
+    - name: Install Minikube
+      apt:
+        deb: /awx/minikube_latest_amd64.deb
+        state: present
+
+    - name: Disabling protection for root write in /tmp
+      command: sysctl fs.protected_regular=0
+      
+      
+    - name: Start Minikube with Docker driver and Ingress addon
+      command: minikube start --driver=docker --addons=ingress --cpus=2 --memory=8g --force
+      register: minikube_start_output
+    - debug:
+        var: minikube_start_output.stdout
+
+    - name: Clone AWX Operator repository
+      git:
+        repo: "https://github.com/ansible/awx-operator.git"
+        dest: /awx/awx-operator
+        version: "2.19.1"
+
+    - name: Change directory to awx-operator
+      command: chdir=/awx/awx-operator pwd
+      register: awx_dir
+
+    - name: Deploy AWX Operator
+      command: make deploy
+      args:
+        chdir: /awx/awx-operator
+      environment:
+        NAMESPACE: ansible-awx
+      register: make_deploy_output
+    - debug:
+        var: make_deploy_output.stdout
+
+    - name: Creating ansible-awx.yml file
+      copy:
+        dest: /awx/awx-operator/ansible-awx.yml
+        content: |
+          ---
+          apiVersion: awx.ansible.com/v1beta1
+          kind: AWX
+          metadata:
+            name: ansible-awx
+          spec:
+            service_type: nodeport
+            nodeport_port 10446
+        
+    - name: Set kubectl context to ansible-awx namespace
+      command: kubectl config set-context --current --namespace=ansible-awx
+
+    - name: Apply AWX configuration
+      command: kubectl apply -f /awx/awx-operator/ansible-awx.yml
+      register: kubectl_apply_output
+    - debug:
+        var: kubectl_apply_output.stdout
+
+    - name: Enabling protection for root write in /tmp
+      command: sysctl fs.protected_regular=1
