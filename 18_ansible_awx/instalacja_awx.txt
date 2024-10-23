@@ -1,0 +1,64 @@
+apt update && apt -y full-upgrade
+apt install git make curl docker.io -y
+docker --version
+
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+kubectl version --client --output=yaml
+
+
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+dpkg -i minikube_latest_amd64.deb
+minikube version
+
+minikube start --driver=docker --addons=ingress --cpus=2 --memory=8g --force
+
+minikube status
+kubectl get pods -A
+
+git clone https://github.com/ansible/awx-operator.git
+cd awx-operator
+
+# Poniższą wersję "2.19.1" weryfikujemy na stronie (i wymieniamy na nowszą wersję jak jest takowa): https://github.com/ansible/awx-operator/releases
+git checkout 2.19.1
+export NAMESPACE=ansible-awx
+make deploy
+
+kubectl get pods -n $NAMESPACE
+
+
+cp awx-demo.yml ansible-awx.yml
+mcedit ansible-awx.yml
+
+---
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: ansible-awx
+spec:
+  service_type: nodeport
+  
+  
+  
+kubectl config set-context --current --namespace=$NAMESPACE
+kubectl apply -f ansible-awx.yml
+
+kubectl logs -f deployments/awx-operator-controller-manager -c awx-manager
+
+kubectl get pods -l "app.kubernetes.io/managed-by=awx-operator"
+
+kubectl get service -l "app.kubernetes.io/managed-by=awx-operator"
+
+
+
+#za pomocą poniższego polecenia odczytujemy hasło wyegenrowane dla konta "admin" aby móc się za chwilkę zalogować do AWX
+kubectl get secret ansible-awx-admin-password -o jsonpath="{.data.password}" | base64 --decode; echo
+
+
+minikube service ansible-awx-service --url -n ansible-awx
+
+#za pomocą poniższego polecenia uruchamiamy przekierowanie portu z POD'a na zewnątrz
+kubectl port-forward service/ansible-awx-service --address 0.0.0.0 10445:80
+
+http://{adres_IP}:10445
