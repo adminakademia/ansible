@@ -88,7 +88,6 @@
             name: ansible-awx
           spec:
             service_type: nodeport
-            nodeport_port 10446
         
     - name: Set kubectl context to ansible-awx namespace
       command: kubectl config set-context --current --namespace=ansible-awx
