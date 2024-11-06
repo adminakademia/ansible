@@ -1,0 +1,19 @@
+---
+- name: Playbook testowy dla Windows
+  gather_facts: yes 
+  hosts: nowak.private
+
+  tasks:
+    - name: testowanie powershell
+      win_shell: |
+                Get-NetIPAddress
+      register: wynik_powershell_test
+
+    - name: pokaż wynik polecenia powershell
+      debug:
+        var: wynik_powershell_test
+    
+    - name: Instalacja dig
+      win_chocolatey:
+        name: bind-toolsonly
+        state: present
