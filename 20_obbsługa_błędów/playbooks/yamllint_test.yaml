@@ -1,0 +1,7 @@
+- name: Playbook do przetestowania działania zmiennych specjalnych
+  gather_fact: yes # nie chcemy zbierać informacji o urządzeniach
+  hosts: serweryweb
+
+  tasks:
+    - debug:
+       msg: "wartość zmiennej: {{ ansible_default_ipv4.interface }}"
