@@ -1,0 +1,26 @@
+---
+- name: Playbook do przetestowania działania zmiennych specjalnych
+  gather_facts: true  # nie chcemy zbierać informacji o urządzeniach
+  hosts: serweryweb
+
+  tasks:
+    - name: Przykładowy blok zadań
+      block:
+        - name: Zaktualizuj wszystkie pakiety do najnowszej wersji
+          ansible.builtin.apt:
+            update_cache: yes
+            upgrade: dist
+
+        - name: Zainstaluj oprogramowanie
+          ansible.builtin.apt:
+            name:
+              - htop
+              - iperf4
+            state: present
+
+      rescue:
+        - name: Zadanie do uruchomienia w przypadku wystąpienia błędu
+          ansible.builtin.command: echo "Wystąpił błąd"
+      always:
+        - name: Zadanie, które zawsze należy uruchomić
+          ansible.builtin.command: echo "To zawsze jest uruchamiane"
