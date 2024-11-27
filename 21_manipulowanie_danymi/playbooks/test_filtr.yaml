@@ -1,0 +1,52 @@
+---
+- name: Dodanie prefix'u przed wyraz
+  hosts: localhost
+  gather_facts: no
+  vars:
+    wyrazy: ['pies', 'kot', 'rybki']
+
+  tasks:
+    - name: Dodaj prefix 'zwierze_' do każdego wyrazu
+      debug:
+        msg: "{{ wyrazy | map('regex_replace', '^', 'zwierze_') }}"
+
+---
+- name: Konwertuj elementy listy na wielkie litery i aktualizuj listę
+  hosts: localhost
+  gather_facts: no
+  vars:
+    owoce: ['banan', 'jabłko', 'pomarańcz']
+
+  tasks:
+    - name: Zmień każdy element na wielkie litery
+      set_fact:
+        owoce: "{{ owoce | map('upper') }}"
+
+    - name: Wyświetl zaktualizowaną listę
+      debug:
+        msg: "{{ owoce }}"
+
+---
+- name: Wyodrębnij określone dane z obiektów JSON
+  hosts: localhost
+  gather_facts: no
+  vars:
+    dane_json: 
+      - { imie: "Anna", stanowisko: "Programista" }
+      - { imie: "Jan", stanowisko: "Sprzedawca" }
+      - { imie: "Adam", stanowisko: "Kierownik" }
+
+  tasks:
+    - name: Wyodrębnij rolę każdej osoby
+      set_fact:
+        informacja: "{{ dane_json | map(attribute='szczegoly') | map(attribute='stanowisko') | select('match', '^P.*.a$') | map('regex_replace', '^P.*.a$', 'Programistka') | hash('sha256') }}"
+
+    - name: Wyświetl wyodrębnione role
+      debug:
+        msg: "{{ stanowisko }}"		
+
+
+
+
+
+
