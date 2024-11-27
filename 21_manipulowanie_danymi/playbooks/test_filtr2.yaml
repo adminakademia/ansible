@@ -1,0 +1,36 @@
+---
+- name: Wyszukaj adres IP
+  gather_facts: no 
+  hosts: cisco
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: cisco.ios.ios
+    ansible_user: user
+    ansible_ssh_private_key_file: '~/.ssh/id_rsa'
+
+
+  tasks:
+    - name: Pobierz adresy IP skonfigurowane na interfejsach
+      cisco.ios.ios_command:
+        commands:
+          - show ip interface brief
+      register: ip_output
+
+    - name: Wyszukaj adres IP w pobranych informacjach
+      set_fact:
+        ip_urzadzenia: >-
+          {{
+            ip_output.stdout[0].splitlines()
+            | map('regex_search', '\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b')
+            | select('equalto', '192.168.122.240')
+            | length > 0
+          }}
+
+    - name: Wyświetl wyodrębnioną informację
+      debug:
+        msg: "{{ ip_urzadzenia }}"
+
+    - name: Wyświetl nazwę urządzenia, jeśli ma adres IP
+      debug:
+        msg: "Urządzenie {{ inventory_hostname }} posiada adres IP 192.168.122.240"
+      when: ip_urzadzenia
