@@ -1,0 +1,6 @@
+- name: Weryfikacja z ping
+  hosts: serweryweb
+  gather_facts: false
+
+  tasks:
+  - ping:
